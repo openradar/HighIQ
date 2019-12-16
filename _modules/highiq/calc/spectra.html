@@ -1,0 +1,490 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>highiq.calc.spectra &mdash; HighIQ 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/gallery.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="HighIQ 1.0 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> HighIQ
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installing HighIQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HighIQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing.html">Contributor’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../API/index.html">API Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">HighIQ</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>highiq.calc.spectra</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for highiq.calc.spectra</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cupy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">import</span> <span class="nn">xarray</span> <span class="k">as</span> <span class="nn">xr</span>
+
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="k">import</span> <span class="n">hann</span><span class="p">,</span> <span class="n">find_peaks</span>
+<span class="kn">from</span> <span class="nn">pint</span> <span class="k">import</span> <span class="n">UnitRegistry</span>
+<span class="kn">from</span> <span class="nn">.gpu_methods</span> <span class="k">import</span> <span class="n">_fast_expand</span><span class="p">,</span> <span class="n">_gpu_moving_average</span>
+
+
+<div class="viewcode-block" id="welchs_method"><a class="viewcode-back" href="../../../API/generated/highiq.calc.welchs_method.html#highiq.calc.welchs_method">[docs]</a><span class="k">def</span> <span class="nf">welchs_method</span><span class="p">(</span><span class="n">complex_coeff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">50e6</span><span class="p">,</span> <span class="n">nfft</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">window_skip</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">num_per_block</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This technique is an implementation of Welch&#39;s method for processing a Doppler spectral</span>
+<span class="sd">    density function from complex autocorrelation function data. Welch&#39;s method calculates</span>
+<span class="sd">    the Doppler spectral density function by calculating the FFT over (potentially overlapping)</span>
+<span class="sd">    windows and then taking the average of the magnitudes of each FFT to create the Doppler spectra.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    complex_coeff: complex nD array</span>
+<span class="sd">        An n-D array of complex floats representing the value of the autocorrelation</span>
+<span class="sd">        function. The first dimension is the number of entries in time, and the second is the number</span>
+<span class="sd">        of entries in the range dimension.</span>
+<span class="sd">    fs:</span>
+<span class="sd">        The pulse repetition frequency of the radar.</span>
+<span class="sd">    nfft:</span>
+<span class="sd">        The number of points to include in the FFT for calculating spectra. This must</span>
+<span class="sd">        be an even number.</span>
+<span class="sd">    window_skip:</span>
+<span class="sd">        The number of points to go forward for each window. This cannot exceed the</span>
+<span class="sd">        size of the FFT.</span>
+<span class="sd">    num_per_block:</span>
+<span class="sd">        The number of time periods to send to the GPU at one time. This is implemented</span>
+<span class="sd">        because the GPU can only handle a limited number of data points at one time.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    freq: 1D array</span>
+<span class="sd">        The frequencies corresponding to each value in the spectra.</span>
+<span class="sd">    power: nD array</span>
+<span class="sd">        The power spectral densities for each frequency.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">nfft</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of points in the FFT must be even!&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">window_skip</span> <span class="o">&gt;</span> <span class="n">nfft</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;window_skip cannot be greater than nfft!&quot;</span><span class="p">)</span>
+
+    <span class="n">times</span> <span class="o">=</span> <span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_points</span> <span class="o">=</span> <span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">hann</span><span class="p">(</span><span class="n">nfft</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">my_fft</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">nfft</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">num_per_block</span><span class="p">):</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">the_max</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">k</span> <span class="o">+</span> <span class="n">num_per_block</span><span class="p">,</span> <span class="n">times</span><span class="p">])</span>
+            <span class="n">gpu_complex</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">complex_coeff</span><span class="p">[</span><span class="n">k</span><span class="p">:</span><span class="n">the_max</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>
+            <span class="n">windowt</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="p">(</span><span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">temp_fft</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">nfft</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">window_skip</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="n">nfft</span> <span class="o">&gt;</span> <span class="n">num_points</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">num_points</span> <span class="o">-</span> <span class="n">nfft</span>
+                    <span class="n">temp_fft</span> <span class="o">+=</span> <span class="n">cp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span>
+                        <span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">gpu_complex</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">start</span><span class="p">:]</span> <span class="o">*</span> <span class="n">windowt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">temp_fft</span> <span class="o">+=</span> <span class="n">cp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span>
+                        <span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">gpu_complex</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">nfft</span><span class="p">]</span> <span class="o">*</span> <span class="n">windowt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">temp_fft</span> <span class="o">=</span> <span class="n">temp_fft</span> <span class="o">/</span> <span class="n">j</span>
+            <span class="n">my_fft</span><span class="p">[</span><span class="n">k</span><span class="p">:</span><span class="n">the_max</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_fft</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">gpu_complex</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">complex_coeff</span><span class="p">)</span>
+        <span class="n">windowt</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="p">((</span><span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)))</span>
+        <span class="n">temp_fft</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">gpu_complex</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">nfft</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_points</span><span class="p">,</span> <span class="n">window_skip</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="n">nfft</span> <span class="o">&gt;</span> <span class="n">num_points</span><span class="p">:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">num_points</span> <span class="o">-</span> <span class="n">nfft</span>
+                <span class="n">temp_fft</span> <span class="o">+=</span> <span class="n">cp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span>
+                    <span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">gpu_complex</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:]</span> <span class="o">*</span> <span class="n">windowt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">temp_fft</span> <span class="o">+=</span> <span class="n">cp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span>
+                    <span class="n">cp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft</span><span class="p">(</span><span class="n">gpu_complex</span><span class="p">[:,</span> <span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">nfft</span><span class="p">]</span> <span class="o">*</span> <span class="n">windowt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">temp_fft</span> <span class="o">=</span> <span class="n">temp_fft</span> <span class="o">/</span> <span class="n">j</span>
+        <span class="n">my_fft</span> <span class="o">=</span> <span class="n">temp_fft</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="n">power</span> <span class="o">=</span> <span class="n">my_fft</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftfreq</span><span class="p">(</span><span class="n">nfft</span><span class="p">)</span> <span class="o">*</span> <span class="n">fs</span>
+
+    <span class="k">return</span> <span class="n">freq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">power</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_psd"><a class="viewcode-back" href="../../../API/generated/highiq.calc.get_psd.html#highiq.calc.get_psd">[docs]</a><span class="k">def</span> <span class="nf">get_psd</span><span class="p">(</span><span class="n">spectra</span><span class="p">,</span> <span class="n">gate_resolution</span><span class="o">=</span><span class="mf">30.</span><span class="p">,</span> <span class="n">wavelength</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nfft</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+            <span class="n">acf_name</span><span class="o">=</span><span class="s1">&#39;acf&#39;</span><span class="p">,</span> <span class="n">acf_bkg_name</span><span class="o">=</span><span class="s1">&#39;acf_bkg&#39;</span><span class="p">,</span> <span class="n">block_size_ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function will get the power spectral density from the autocorrelation function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spectra: ACT Dataset</span>
+<span class="sd">        The dataset containing the autocorrelation function.</span>
+<span class="sd">    gate_resolution: float</span>
+<span class="sd">        The gate resolution to derive the spectra for.</span>
+<span class="sd">    wavelength: float or None</span>
+<span class="sd">        The wavelength (in m) of the radar. If None, HighIQ will attempt to load the</span>
+<span class="sd">        wavelength from the wavelength attribute of the spectra dataset.</span>
+<span class="sd">    fs: float or None</span>
+<span class="sd">        The pulse repetition frequency of the radar in Hz. If None,</span>
+<span class="sd">        HighIQ will try and extract this information from the</span>
+<span class="sd">        ACT dataset. This will require that the dataset</span>
+<span class="sd">        have an attribute called sample_rate that contains a string</span>
+<span class="sd">        with the magnitude and units of the sample rate.</span>
+<span class="sd">    nfft: int</span>
+<span class="sd">        The number of points to include in the FFT.</span>
+<span class="sd">    acf_name: str</span>
+<span class="sd">        The name of the autocorrelation function field.</span>
+<span class="sd">    acf_bkg_name: str</span>
+<span class="sd">        The name of the autocorrelation function of the background.</span>
+<span class="sd">    block_size_ratio: float</span>
+<span class="sd">        Increase this value to use more GPU memory for processing. Doing this can</span>
+<span class="sd">        poentially optimize processing.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    spectra: ACT Dataset</span>
+<span class="sd">        The dataset containing the power spectral density functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">Q_</span> <span class="o">=</span> <span class="n">UnitRegistry</span><span class="p">()</span><span class="o">.</span><span class="n">Quantity</span>
+    <span class="k">if</span> <span class="n">fs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;sample_rate&quot;</span> <span class="ow">in</span> <span class="n">spectra</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;If sample frequency is not specified, then ACT Dataset must contain a sample_rate &quot;</span> <span class="o">+</span>
+                           <span class="s2">&quot;attribute!&quot;</span><span class="p">)</span>
+
+        <span class="n">fs_pint</span> <span class="o">=</span> <span class="n">Q_</span><span class="p">(</span><span class="n">spectra</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;sample_rate&quot;</span><span class="p">])</span>
+        <span class="n">fs_pint</span> <span class="o">=</span> <span class="n">fs_pint</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;Hz&quot;</span><span class="p">)</span>
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">fs_pint</span><span class="o">.</span><span class="n">magnitude</span>
+
+
+    <span class="k">if</span> <span class="n">wavelength</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s2">&quot;wavelength&quot;</span> <span class="ow">in</span> <span class="n">spectra</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;If wavelength is not specified, then the dataset must contain a wavelength attribute!&quot;</span><span class="p">)</span>
+        <span class="n">fs_pint</span> <span class="o">=</span> <span class="n">Q_</span><span class="p">(</span><span class="n">spectra</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;wavelength&quot;</span><span class="p">])</span>
+        <span class="n">fs_pint</span> <span class="o">=</span> <span class="n">fs_pint</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+        <span class="n">wavelength</span> <span class="o">=</span> <span class="n">fs_pint</span><span class="o">.</span><span class="n">magnitude</span>
+
+
+    <span class="n">num_gates</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gate_resolution</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">complex_coeff</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="n">acf_name</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="nb">complex</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span>\
+                    <span class="n">spectra</span><span class="p">[</span><span class="n">acf_name</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="nb">complex</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span>
+    <span class="n">complex_coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+        <span class="n">complex_coeff</span><span class="p">,</span> <span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">num_gates</span><span class="p">),</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_gates</span><span class="p">)))</span>
+    <span class="n">freq</span><span class="p">,</span> <span class="n">power</span> <span class="o">=</span> <span class="n">welchs_method</span><span class="p">(</span>
+        <span class="n">complex_coeff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">nfft</span><span class="o">=</span><span class="n">nfft</span><span class="p">,</span> <span class="n">num_per_block</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">block_size_ratio</span><span class="o">*</span><span class="mi">200</span><span class="p">))</span>
+    <span class="n">attrs_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Range&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;m&#39;</span><span class="p">}</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">gate_resolution</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])),</span>
+        <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;range&#39;</span><span class="p">),</span> <span class="n">attrs</span><span class="o">=</span><span class="n">attrs_dict</span><span class="p">)</span>
+
+    <span class="n">spectra</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;nyquist_velocity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%f</span><span class="s2"> m s-1&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">fs</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">])</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;long_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Doppler spectra bins in frequency units&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Hz&quot;</span>
+    <span class="n">vel_bins</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">inds_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">vel_bins</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">vel_bins</span> <span class="o">=</span> <span class="n">vel_bins</span><span class="p">[</span><span class="n">inds_sorted</span><span class="p">]</span>
+    <span class="n">attrs_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;long_name&#39;</span><span class="p">:</span> <span class="s1">&#39;Doppler velocity&#39;</span><span class="p">,</span> <span class="s1">&#39;units&#39;</span><span class="p">:</span> <span class="s1">&#39;m s-1&#39;</span><span class="p">}</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">vel_bins</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">),</span> <span class="n">attrs</span><span class="o">=</span><span class="n">attrs_dict</span><span class="p">)</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;freq_bins&#39;</span><span class="p">][</span><span class="n">inds_sorted</span><span class="p">]</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">power</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">inds_sorted</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="s1">&#39;vel_bins&#39;</span><span class="p">)))</span>
+
+    <span class="n">complex_coeff</span> <span class="o">=</span> <span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="n">acf_bkg_name</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="nb">complex</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">+</span>
+                     <span class="n">spectra</span><span class="p">[</span><span class="n">acf_bkg_name</span><span class="p">]</span><span class="o">.</span><span class="n">sel</span><span class="p">(</span><span class="nb">complex</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">*</span> <span class="mi">1</span><span class="n">j</span><span class="p">)</span>
+    <span class="n">complex_coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+        <span class="n">complex_coeff</span><span class="p">,</span> <span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">num_gates</span><span class="p">),</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">complex_coeff</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_gates</span><span class="p">)))</span>
+    <span class="n">freq</span><span class="p">,</span> <span class="n">power</span> <span class="o">=</span> <span class="n">welchs_method</span><span class="p">(</span>
+        <span class="n">complex_coeff</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mf">50e6</span><span class="p">,</span> <span class="n">nfft</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">num_per_block</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">200</span><span class="o">*</span><span class="n">block_size_ratio</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_bkg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">power</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">inds_sorted</span><span class="p">],</span> <span class="n">dims</span><span class="o">=</span><span class="p">((</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="s1">&#39;vel_bins&#39;</span><span class="p">)))</span>
+
+    <span class="c1"># Subtract background noise</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_bkg&#39;</span><span class="p">]</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;long_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Power spectral density&quot;</span>
+    <span class="n">tot_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">dV</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">])</span>
+    <span class="n">power_tiled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">tot_power</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">power_tiled</span> <span class="o">/</span> <span class="n">dV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;long_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;p.d.f. of power spectra&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;%&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">])</span> <span class="o">/</span> <span class="n">dV</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;s dB-1 m-1 &#39;</span>
+
+    <span class="c1"># Smooth out power spectra</span>
+    <span class="n">interpolated_bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+        <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">256</span><span class="p">)</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">interpolated_bins</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Doppler velocity&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;m s-1&quot;</span>
+    <span class="n">my_array</span> <span class="o">=</span> <span class="n">_gpu_moving_average</span><span class="p">(</span>
+        <span class="n">_fast_expand</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density_interp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">my_array</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Power spectral density&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectral_density_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;s dB-1 m-1&quot;</span>
+    <span class="n">my_array</span> <span class="o">=</span> <span class="n">_gpu_moving_average</span><span class="p">(</span>
+        <span class="n">_fast_expand</span><span class="p">(</span><span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed_interp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+        <span class="n">my_array</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="s1">&#39;vel_bin_interp&#39;</span><span class="p">),)</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Power spectral density&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed_interp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;units&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;%&quot;</span>
+
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Range&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;m&#39;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Doppler velocity&quot;</span>
+    <span class="n">spectra</span><span class="p">[</span><span class="s1">&#39;vel_bins&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;m s-1&#39;</span>
+    <span class="k">return</span> <span class="n">spectra</span></div>
+
+
+<div class="viewcode-block" id="calc_num_peaks"><a class="viewcode-back" href="../../../API/generated/highiq.calc.calc_num_peaks.html#highiq.calc.calc_num_peaks">[docs]</a><span class="k">def</span> <span class="nf">calc_num_peaks</span><span class="p">(</span><span class="n">my_spectra</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    This function will calculate the number of peaks in the spectra.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    my_spectra: ACT Dataset</span>
+<span class="sd">        The dataset to calculate the number of peaks for.</span>
+<span class="sd">    kwargs:</span>
+<span class="sd">        Additional keyword arguments are passed into :func:`scipy.signal.find_peaks`.</span>
+<span class="sd">        The default minimum height and width of the peak are set to 3 and 8 points</span>
+<span class="sd">        respectively.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    my_spectra: ACT Dataset</span>
+<span class="sd">        The dataset with an &#39;npeaks&#39; variable included that shows the number of peaks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spectra</span> <span class="o">=</span> <span class="n">my_spectra</span><span class="p">[</span><span class="s1">&#39;power_spectra_normed_interp&#39;</span><span class="p">]</span>
+    <span class="n">my_array</span> <span class="o">=</span> <span class="n">spectra</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">shp</span> <span class="o">=</span> <span class="n">my_array</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">num_peaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">shp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">shp</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;height&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;height&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;width&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;height&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shp</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">shp</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">num_peaks</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">find_peaks</span><span class="p">(</span><span class="n">my_array</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">],</span> <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">my_spectra</span><span class="p">[</span><span class="s1">&#39;npeaks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xr</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">num_peaks</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;range&#39;</span><span class="p">))</span>
+    <span class="n">my_spectra</span><span class="p">[</span><span class="s1">&#39;npeaks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;long_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Number of peaks in Doppler spectra&quot;</span>
+    <span class="n">my_spectra</span><span class="p">[</span><span class="s1">&#39;npeaks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;units&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+
+    <span class="k">return</span> <span class="n">my_spectra</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Bobby Jackson.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> and ❤️  using a custom <a href="https://github.com/LinxiFan/Sphinx-theme">theme</a> based on <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../../_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

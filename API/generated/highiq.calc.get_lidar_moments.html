@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>highiq.calc.get_lidar_moments &mdash; HighIQ 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../_static/gallery.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="HighIQ 1.0 documentation" href="../../index.html"/>
+        <link rel="up" title="highiq.calc" href="../calc.html"/>
+        <link rel="next" title="highiq.calc.get_psd" href="highiq.calc.get_psd.html"/>
+        <link rel="prev" title="highiq.calc" href="../calc.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> HighIQ
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installing HighIQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Using HighIQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributor’s Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../calc.html">highiq.calc</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">highiq.calc.get_lidar_moments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="highiq.calc.get_psd.html">highiq.calc.get_psd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="highiq.calc.calc_num_peaks.html">highiq.calc.calc_num_peaks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="highiq.calc.welchs_method.html">highiq.calc.welchs_method</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../io.html">highiq.io</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HighIQ</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">API Reference</a> &raquo;</li>
+        
+          <li><a href="../calc.html">highiq.calc</a> &raquo;</li>
+        
+      <li>highiq.calc.get_lidar_moments</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/API/generated/highiq.calc.get_lidar_moments.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="highiq-calc-get-lidar-moments">
+<h1>highiq.calc.get_lidar_moments<a class="headerlink" href="#highiq-calc-get-lidar-moments" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="highiq.calc.get_lidar_moments">
+<code class="sig-prename descclassname">highiq.calc.</code><code class="sig-name descname">get_lidar_moments</code><span class="sig-paren">(</span><em class="sig-param">spectra</em>, <em class="sig-param">snr_thresh=0</em>, <em class="sig-param">block_size_ratio=1.0</em>, <em class="sig-param">which_moments=None</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/highiq/calc/moments.html#get_lidar_moments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#highiq.calc.get_lidar_moments" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function will retrieve the lidar moments of the Doppler spectra.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>spectra: ACT Dataset</strong></dt><dd><p>The dataset containing the processed Doppler spectral density functions.</p>
+</dd>
+<dt><strong>snr_thresh: float</strong></dt><dd><p>The minimum signal to noise ratio to use as an initial mask of noise.</p>
+</dd>
+<dt><strong>block_size_ratio: float</strong></dt><dd><p>This value is used to determine how much data the GPU will process in one loop. If your
+GPU has more memory, you may be able to optimize processing by raising this number. In
+addition, if you encounter out of memory errors, try lowering this number, ensuring that
+it is a positive floating point number.</p>
+</dd>
+<dt><strong>which_moments: list or None</strong></dt><dd><p>This tells HighIQ which moments should be processed. If this list is None, then the
+signal to noise ratio, doppler velocity, spectral width, skewness,
+and kurtosis will be calculated.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>spectra:</dt><dd><p>The database with the Doppler lidar moments.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="highiq.calc.get_psd.html" class="btn btn-neutral float-right" title="highiq.calc.get_psd" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../calc.html" class="btn btn-neutral" title="highiq.calc" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Bobby Jackson.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> and ❤️  using a custom <a href="https://github.com/LinxiFan/Sphinx-theme">theme</a> based on <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="../../_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+      <script type="text/javascript" src="../../_static/copybutton.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

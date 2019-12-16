@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Using HighIQ &mdash; HighIQ 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+  
+    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="HighIQ 1.0 documentation" href="index.html"/>
+        <link rel="next" title="Contributor’s Guide" href="contributing.html"/>
+        <link rel="prev" title="Installing HighIQ" href="installation.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> HighIQ
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing HighIQ</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using HighIQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#input-and-output">Input and Output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optimizing-processing">Optimizing processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting-spectra">Plotting Spectra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting-2d-time-series">Plotting 2D time series</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributor’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="API/index.html">API Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HighIQ</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Using HighIQ</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/usage.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="using-highiq">
+<h1>Using HighIQ<a class="headerlink" href="#using-highiq" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="input-and-output">
+<h2>Input and Output<a class="headerlink" href="#input-and-output" title="Permalink to this headline">¶</a></h2>
+<p>HighIQ uses NetCDF files as its inputs. Currently, the I/O module supports NetCDF
+files that conform to Atmospheric Radiation Measurement standards. Therefore, in
+order to place data into a format supported by HighIQ, a data ingest must be
+able to place the data in xarray datasets that contain 3D variables that have
+dimensions of (<em>time</em>, <em>nsamples</em>, <em>complex</em>). These dimensions are defined as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><em>time</em> = the number of samples in time</p></li>
+<li><p><em>nsamples</em> = the number of given samples for a ray</p></li>
+<li><p><em>complex</em> = index 0 is real component of ACF, 1 is imaginary component.</p></li>
+</ul>
+</div></blockquote>
+<p>The <em>complex</em> dimension will always be of length 2. This array will store the ACF
+for the radar or lidar signal. In addition, HighIQ also expects a background ACF
+for determining the noise floor of the instrument. This background ACF array will
+have the same dimensions as the ACF array.</p>
+<p>After the acf array has been created (or loaded using xarray.open_dataset), the
+next step is to create the Doppler spectra using <a class="reference internal" href="API/generated/highiq.calc.get_psd.html#highiq.calc.get_psd" title="highiq.calc.get_psd"><code class="xref py py-func docutils literal notranslate"><span class="pre">highiq.calc.get_psd()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ my_ds = highiq.calc.get_psd(my_ds)
+</pre></div>
+</div>
+<p>Read the documentation on <a class="reference internal" href="API/generated/highiq.calc.get_psd.html#highiq.calc.get_psd" title="highiq.calc.get_psd"><code class="xref py py-func docutils literal notranslate"><span class="pre">highiq.calc.get_psd()</span></code></a> in order to learn how to
+customize parameters such as the size of the range gate, sampling frequency, and
+number of points to include in the FFT. This function will add Doppler spectra
+variables ‘power_spectra_density’ which contains the power spectral density in
+<span class="math notranslate nohighlight">\(dB\ m\ s^{-1}\)</span> and ‘power_spectra_density_normed’ which is normalized
+such that the integral under the curve is 100%. The power spectra density are defined
+at <em>nfft</em> points between the negative and positive Nyquist velocities of the
+radar or lidar.</p>
+<p>However, while <em>nfft</em> can be the optimal number of points to include in
+the FFT, for a robust calculation of moments, interpolation of the Doppler spectra
+are required. Therefore, In addition, HighIQ will interpolate the Doppler spectra
+generated over the original <em>nfft</em> point space in order to provide smoother Doppler
+spectra more suitable for the calculation of the moments of the spectra.</p>
+<p>After these Doppler spectra are created, the calculation of the lidar moments is as
+easy as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ my_moments = highiq.calc.get_lidar_moments(my_ds)
+</pre></div>
+</div>
+</div>
+<div class="section" id="optimizing-processing">
+<h2>Optimizing processing<a class="headerlink" href="#optimizing-processing" title="Permalink to this headline">¶</a></h2>
+<p>For both the processing of the Doppler spectra and moments, HighIQ will only store
+a portion of the dataset in the GPU’s memory due to limitations. However, if you
+have a high amount of GPU memory, you may be able to optimize the processing
+by increasing the <em>block_size_ratio</em> keyword of both <a class="reference internal" href="API/generated/highiq.calc.get_lidar_moments.html#highiq.calc.get_lidar_moments" title="highiq.calc.get_lidar_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">highiq.calc.get_lidar_moments()</span></code></a> and
+<a class="reference internal" href="API/generated/highiq.calc.get_psd.html#highiq.calc.get_psd" title="highiq.calc.get_psd"><code class="xref py py-func docutils literal notranslate"><span class="pre">highiq.calc.get_psd()</span></code></a>.</p>
+</div>
+<div class="section" id="plotting-spectra">
+<h2>Plotting Spectra<a class="headerlink" href="#plotting-spectra" title="Permalink to this headline">¶</a></h2>
+<p>Since the output arrays are xarray Datasets, the standard xarray plotting routines
+can be used to make visualizations. For example, in order to plot the Doppler spectra
+from the example file, we simply do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ # Load the data. This uses a module in the Atmospheric Community
+$ # Toolkit to ensure that the input acf data are always
+$ # entered into a 3D array of (time, nsamples, complex)
+$
+$ my_ds = highiq.io.load_arm_netcdf(highiq.testing.TEST_FILE)
+$ my_ds_processed = highiq.calc.get_psd(my_ds)
+$
+$ # For plotting the spectra, simply use xarray&#39;s built in functionality
+$ #
+$ my_ds_processed.power_spectra_normed_interp.sel(range=400, method=&#39;nearest&#39;).plot()
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/spectra_plot.png"><img alt="_images/spectra_plot.png" src="_images/spectra_plot.png" style="width: 600px;" /></a>
+<p>The above example chooses the range gate that is 400 m away from the radar and will plot
+the Doppler spectra at that point. In this example, we are using the single test data point
+file that is contained within HighIQ’s test file. For files with multiple time periods,
+selecting by time period is as easy as specifying a time keyword to the <em>sel</em> function in last line in
+the above example. The format of this time is a <em>datetime</em>, so selecting 2018-08-01 00:40:00 UTC would mean
+adding a <code class="code docutils literal notranslate"><span class="pre">time=datetime(2018,</span> <span class="pre">8,</span> <span class="pre">1,</span> <span class="pre">0,</span> <span class="pre">40,</span> <span class="pre">0)</span></code> to the list of keywords.</p>
+</div>
+<div class="section" id="plotting-2d-time-series">
+<h2>Plotting 2D time series<a class="headerlink" href="#plotting-2d-time-series" title="Permalink to this headline">¶</a></h2>
+<p>2D Visualization of spectra is easily done using the <a class="reference external" href="https://anl-digr.github.io/ACT">Atmospheric Community Toolkit
+(ACT)</a> One is encouraged to read the documentation
+and examples from ACT in order to learn how to create custom visualizations. For the
+majority of vertically-pointing observations, ACT’s TimeSeriesDisplay object provides
+the functionality needed to create quicklook plots of the retrieved lidar moments.
+For example, in order to plot the radar moments from the example
+<a class="reference external" href="https://drive.google.com/uc?export=download&amp;id=1x7pT4K05wJufepBR_26N1wpLzCoEEr9H">file</a>, simply
+do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ import highiq
+$ import act
+$ my_ds = highiq.io.load_arm_netcdf(&#39;sgpdlacfC1.a1.20170804.000113.nc.v0&#39;)
+$ my_ds = highiq.calc.get_psd(my_ds)
+$ my_ds = highiq.calc.get_lidar_moments(my_ds)
+$ # Make a stricter mask for Doppler velocity to favor excluding more noise
+$ my_ds[&#39;doppler_velocity&#39;] = my_ds[&#39;doppler_velocity&#39;].where(my_ds.intensity &gt; 1.2)
+
+$ # With ACT, we set up a TimeSeriesDisplay object with two sub plots
+$ my_display = act.plotting.TimeSeriesDisplay(my_ds, figsize=(10,7), subplot_shape=(2,))
+
+$ # The plot function takes in the same kwargs as matplotlib&#39;s plotting routines
+$ my_display.plot(&#39;intensity&#39;, subplot_index=(0,), cmap=&#39;act_HomeyerRainbow&#39;, vmin=1, vmax=10)
+$ my_display.plot(&#39;doppler_velocity&#39;, subplot_index=(1,), cmap=&#39;act_balance&#39;, vmin=-5, vmax=5)
+$ my_display.set_yrng([0, 5000], subplot_index=(0,))
+$ my_display.set_yrng([0, 5000], subplot_index=(1,))
+$ my_display.fig.savefig(&#39;spectra_difference.png&#39;, dpi=300)
+</pre></div>
+</div>
+<a class="reference internal image-reference" href="_images/spectra_example.png"><img alt="_images/spectra_example.png" src="_images/spectra_example.png" style="width: 1200px;" /></a>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="contributing.html" class="btn btn-neutral float-right" title="Contributor’s Guide" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installing HighIQ" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Bobby Jackson.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> and ❤️  using a custom <a href="https://github.com/LinxiFan/Sphinx-theme">theme</a> based on <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="_static/language_data.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script>
+      <script type="text/javascript" src="_static/copybutton.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

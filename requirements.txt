@@ -1,5 +1,0 @@
-numpy
-scipy
-cupy
-act-atmos
-pint
