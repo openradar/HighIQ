@@ -95,8 +95,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#plotting-2d-time-series">Plotting 2D time series</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_power_spectra.html">Example on plotting power spectra from raw IQ data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_moments.html">Example on plotting power spectra from raw IQ data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_power_spectra.html">Example on deriving lidar moments from raw IQ data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_moments.html">Example on plotting moments from raw IQ data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributor’s Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="API/index.html">API Reference</a></li>
 </ul>
@@ -241,9 +241,10 @@ adding a <code class="code docutils literal notranslate"><span class="pre">time=
 </div>
 <div class="section" id="plotting-2d-time-series">
 <h2>Plotting 2D time series<a class="headerlink" href="#plotting-2d-time-series" title="Permalink to this headline">¶</a></h2>
-<p>2D Visualization of spectra is easily done using the <a class="reference external" href="https://anl-digr.github.io/ACT">Atmospheric Community Toolkit
-(ACT)</a> One is encouraged to read the documentation
-and examples from ACT in order to learn how to create custom visualizations. For the
+<p>2D Visualization of spectra is easily done using the <a class="reference external" href="https://arm-doe.github.io/ACT">Atmospheric Community Toolkit
+(ACT)</a>. One is encouraged to read the documentation
+and <a class="reference external" href="https://arm-doe.github.io/ACT/source/auto_examples/index.html">examples</a>
+from ACT in order to learn how to create custom visualizations. For the
 majority of vertically-pointing observations, ACT’s TimeSeriesDisplay object provides
 the functionality needed to create quicklook plots of the retrieved lidar moments.
 For example, in order to plot the radar moments from the example
@@ -269,6 +270,7 @@ $ my_display.fig.savefig(&#39;spectra_difference.png&#39;, dpi=300)
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="_images/spectra_example.png"><img alt="_images/spectra_example.png" src="_images/spectra_example.png" style="width: 1200px;" /></a>
+<p>This code will make two subplots that look like the image above.</p>
 </div>
 </div>
 

@@ -10,7 +10,7 @@ This directory contains examples on how to use HighIQ.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Example on plotting power spectra from raw IQ data">
+    <div class="sphx-glr-thumbcontainer" tooltip="Example on deriving lidar moments from raw IQ data">
 
 .. only:: html
 
@@ -30,7 +30,7 @@ This directory contains examples on how to use HighIQ.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Example on plotting power spectra from raw IQ data">
+    <div class="sphx-glr-thumbcontainer" tooltip="Example on plotting moments from raw IQ data">
 
 .. only:: html
 
