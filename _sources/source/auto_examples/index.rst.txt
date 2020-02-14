@@ -10,13 +10,13 @@ This directory contains examples on how to use HighIQ.
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Example on processing moments from ARM Doppler Lidar ACF data">
+    <div class="sphx-glr-thumbcontainer" tooltip="Example on plotting power spectra from raw IQ data">
 
 .. only:: html
 
- .. figure:: /source/auto_examples/images/thumb/sphx_glr_plot_processing_thumb.png
+ .. figure:: /source/auto_examples/images/thumb/sphx_glr_plot_power_spectra_thumb.png
 
-     :ref:`sphx_glr_source_auto_examples_plot_processing.py`
+     :ref:`sphx_glr_source_auto_examples_plot_power_spectra.py`
 
 .. raw:: html
 
@@ -26,7 +26,27 @@ This directory contains examples on how to use HighIQ.
 .. toctree::
    :hidden:
 
-   /source/auto_examples/plot_processing
+   /source/auto_examples/plot_power_spectra
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Example on plotting power spectra from raw IQ data">
+
+.. only:: html
+
+ .. figure:: /source/auto_examples/images/thumb/sphx_glr_plot_moments_thumb.png
+
+     :ref:`sphx_glr_source_auto_examples_plot_moments.py`
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /source/auto_examples/plot_moments
 .. raw:: html
 
     <div class="sphx-glr-clear"></div>
@@ -41,13 +61,13 @@ This directory contains examples on how to use HighIQ.
 
   .. container:: sphx-glr-download
 
-    :download:`Download all examples in Python source code: auto_examples_python.zip <//home/rjackson/openradar/HighIQ/doc/source/source/auto_examples/auto_examples_python.zip>`
+    :download:`Download all examples in Python source code: auto_examples_python.zip <//home/rjackson/HighIQ/doc/source/source/auto_examples/auto_examples_python.zip>`
 
 
 
   .. container:: sphx-glr-download
 
-    :download:`Download all examples in Jupyter notebooks: auto_examples_jupyter.zip <//home/rjackson/openradar/HighIQ/doc/source/source/auto_examples/auto_examples_jupyter.zip>`
+    :download:`Download all examples in Jupyter notebooks: auto_examples_jupyter.zip <//home/rjackson/HighIQ/doc/source/source/auto_examples/auto_examples_jupyter.zip>`
 
 
 .. only:: html

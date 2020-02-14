@@ -25,9 +25,9 @@ Example on processing moments from ARM Doppler Lidar ACF data
 
     /home/rjackson/.conda/envs/spectra_env/lib/python3.7/site-packages/xarray/core/computation.py:609: RuntimeWarning: divide by zero encountered in log10
       result_data = func(*input_data)
-    /home/rjackson/openradar/HighIQ/examples/plot_processing.py:20: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    /home/rjackson/HighIQ/examples/plot_processing.py:20: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       plt.show()
-    /home/rjackson/openradar/HighIQ/examples/plot_processing.py:26: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
+    /home/rjackson/HighIQ/examples/plot_processing.py:26: UserWarning: Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.
       plt.show()
 
 
@@ -69,7 +69,7 @@ Example on processing moments from ARM Doppler Lidar ACF data
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  0.878 seconds)
+   **Total running time of the script:** ( 0 minutes  0.840 seconds)
 
 
 .. _sphx_glr_download_source_auto_examples_plot_processing.py:

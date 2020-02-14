@@ -39,7 +39,7 @@
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="HighIQ 1.0 documentation" href="index.html"/>
         <link rel="next" title="API Reference" href="API/index.html"/>
-        <link rel="prev" title="Using HighIQ" href="usage.html"/> 
+        <link rel="prev" title="Example on plotting power spectra from raw IQ data" href="source/auto_examples/plot_moments.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -89,6 +89,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installing HighIQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HighIQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_power_spectra.html">Example on plotting power spectra from raw IQ data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/auto_examples/plot_moments.html">Example on plotting power spectra from raw IQ data</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Contributor’s Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#contributor-covenant-code-of-conduct">Contributor Covenant Code of Conduct</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#code-style">Code Style</a></li>
@@ -167,14 +169,12 @@
 not good enough to make a contribution. Let us assure you that that is very
 much false. We welcome contributions from anyone no matter what their skill
 level is. Contributions can be as easy as improving the documentation to as
-complex as adding new functionality for differing instruments and models.
-We are even open to speeding up the optimization code if you’re a mathematical
-genius.</p>
+complex as adding new functionality for different instruments.</p>
 <p>There are just some things that we ask of you. One is that your code be able
 to be distributed under the BSD 3-clause license, which is available in LICENSE
 in the main directory.</p>
-<p>One, we ask, that when on the GitHub forum or making contributions to PyDDA
-that all developers and users follow the PyDDA code of conduct.</p>
+<p>One, we ask, that when on the GitHub forum or making contributions to HighIQ
+that all developers and users follow the HighIQ code of conduct.</p>
 <div class="section" id="contributor-covenant-code-of-conduct">
 <h2>Contributor Covenant Code of Conduct<a class="headerlink" href="#contributor-covenant-code-of-conduct" title="Permalink to this headline">¶</a></h2>
 <p><strong>Our Pledge</strong></p>
@@ -237,7 +237,7 @@ available at <a class="reference external" href="http://contributor-covenant.org
 </div>
 <div class="section" id="code-style">
 <h2>Code Style<a class="headerlink" href="#code-style" title="Permalink to this headline">¶</a></h2>
-<p>PyDDA follows the PEP8 code standards. To make sure the code follows the PEP8
+<p>HighIQ follows the PEP8 code standards. To make sure the code follows the PEP8
 style, there are checkers available out there such as pylint and pycodestyle.</p>
 <dl class="simple">
 <dt>For more on PEP8 style:</dt><dd><p><a class="reference external" href="https://www.python.org/dev/peps/pep-0008/">https://www.python.org/dev/peps/pep-0008/</a></p>
@@ -255,7 +255,7 @@ style, there are checkers available out there such as pylint and pycodestyle.</p
 <div class="section" id="python-file-setup">
 <h2>Python File Setup<a class="headerlink" href="#python-file-setup" title="Permalink to this headline">¶</a></h2>
 <p>In a new .py file, the top of the code should have the function, sphinx comments
-and the public and private functions within the .py file. Public fuunctions are
+and the public and private functions within the .py file. Public functions are
 listed first and then private functions and classes. Private functions should
 have an underscore in front of the name. A space is needed between the last
 function and the closing docstring quotation marks.</p>
@@ -269,38 +269,34 @@ standards, modules should be added in the following order:</p>
 </ol>
 </div></blockquote>
 <p>Following the main function def line, but before the code within it, a docstring is
-needed to explain all arguments, retuns, references, and other information. Please
+needed to explain all arguments, returns, references, and other information. Please
 follow the NumPy documentation style:</p>
 <p><a class="reference external" href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt</a></p>
 <p>For an example format of the documentation, see this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_constant_wind_field</span><span class="p">(</span><span class="n">Grid</span><span class="p">,</span> <span class="n">wind</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">),</span> <span class="n">vel_field</span><span class="o">=</span><span class="s1">&#39;velocity&#39;</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_lidar_moments</span><span class="p">(</span><span class="n">spectra</span><span class="p">,</span> <span class="n">snr_thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">block_size_ratio</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">which_moments</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function makes a constant wind field given a wind vector.</span>
-<span class="sd">    This function is useful for specifying the intialization arrays</span>
-<span class="sd">    for get_dd_wind_field.</span>
+<span class="sd">    This function will retrieve the lidar moments of the Doppler spectra.</span>
 
 <span class="sd">    Parameters</span>
-<span class="sd">    ==========</span>
-<span class="sd">    Grid: Py-ART Grid object</span>
-<span class="sd">        This is the Py-ART Grid containing the coordinates for the analysis</span>
-<span class="sd">        grid.</span>
-<span class="sd">    wind: 3-tuple of floats</span>
-<span class="sd">        The 3-tuple specifying the (u,v,w) of the wind field.</span>
-<span class="sd">    vel_field: String</span>
-<span class="sd">        The name of the velocity field. None will automatically</span>
-<span class="sd">        try to detect this field.</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spectra: ACT Dataset</span>
+<span class="sd">        The dataset containing the processed Doppler spectral density functions.</span>
+<span class="sd">    snr_thresh: float</span>
+<span class="sd">        The minimum signal to noise ratio to use as an initial mask of noise.</span>
+<span class="sd">    block_size_ratio: float</span>
+<span class="sd">        This value is used to determine how much data the GPU will process in one loop. If your</span>
+<span class="sd">        GPU has more memory, you may be able to optimize processing by raising this number. In</span>
+<span class="sd">        addition, if you encounter out of memory errors, try lowering this number, ensuring that</span>
+<span class="sd">        it is a positive floating point number.</span>
+<span class="sd">    which_moments: list or None</span>
+<span class="sd">        This tells HighIQ which moments should be processed. If this list is None, then the</span>
+<span class="sd">        signal to noise ratio, doppler velocity, spectral width, skewness,</span>
+<span class="sd">        and kurtosis will be calculated.</span>
 
 <span class="sd">    Returns</span>
-<span class="sd">    =======</span>
-<span class="sd">    u: 3D float array</span>
-<span class="sd">        Returns a 3D float array containing the u component of the wind field.</span>
-<span class="sd">        The shape will be the same shape as the fields in Grid.</span>
-<span class="sd">    v: 3D float array</span>
-<span class="sd">        Returns a 3D float array containing the v component of the wind field.</span>
-<span class="sd">        The shape will be the same shape as the fields in Grid.</span>
-<span class="sd">    w: 3D float array</span>
-<span class="sd">        Returns a 3D float array containing the u component of the wind field.</span>
-<span class="sd">        The shape will be the same shape as the fields in Grid.</span>
+<span class="sd">    -------</span>
+<span class="sd">    spectra:</span>
+<span class="sd">        The database with the Doppler lidar moments.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="p">(</span><span class="n">your</span> <span class="n">code</span> <span class="ow">is</span> <span class="n">here</span><span class="p">)</span>
@@ -309,49 +305,26 @@ follow the NumPy documentation style:</p>
 </div>
 <div class="section" id="testing">
 <h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
-<p>When adding a new function to pyart it is important to add it to the __init__.py
+<p>When adding a new function to HighIQ it is important to add it to the __init__.py
 under the corresponding folder.</p>
 <p>Create a test function and use assert to test the calculated values against known
 values. For an example, see:</p>
-<p><a class="reference external" href="https://github.com/openradar/PyDDA/tests/test_retrieval.py">https://github.com/openradar/PyDDA/tests/test_retrieval.py</a></p>
+<p><a class="reference external" href="https://github.com/rcjackson/HighIQ/blob/master/tests/test_highiq.py">https://github.com/rcjackson/HighIQ/blob/master/tests/test_highiq.py</a></p>
 <p>Pytest will run this test whenever a pull request is made to the master branch
-of the openradar/PyDDA repository. This will then allow the maintainers to
-determine how the pull request will affect the functionality of PyDDA.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_calculate_rad_velocity_cost</span><span class="p">():</span>
-    <span class="n">Grid</span> <span class="o">=</span> <span class="n">pyart</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">make_empty_grid</span><span class="p">(</span>
-        <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)))</span>
-
-    <span class="c1"># a zero field</span>
-    <span class="n">fdata3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
-    <span class="n">Grid</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s1">&#39;zero_field&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">fdata3</span><span class="p">,</span> <span class="s1">&#39;_FillValue&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">9999.0</span><span class="p">})</span>
-
-    <span class="n">vel_field</span> <span class="o">=</span> <span class="s1">&#39;zero_field&#39;</span>
-
-    <span class="n">pydda</span><span class="o">.</span><span class="n">retrieval</span><span class="o">.</span><span class="n">angles</span><span class="o">.</span><span class="n">add_azimuth_as_field</span><span class="p">(</span><span class="n">Grid</span><span class="p">,</span> <span class="n">dz_name</span><span class="o">=</span><span class="s1">&#39;zero_field&#39;</span><span class="p">)</span>
-    <span class="n">pydda</span><span class="o">.</span><span class="n">retrieval</span><span class="o">.</span><span class="n">angles</span><span class="o">.</span><span class="n">add_elevation_as_field</span><span class="p">(</span><span class="n">Grid</span><span class="p">,</span> <span class="n">dz_name</span><span class="o">=</span><span class="s1">&#39;zero_field&#39;</span><span class="p">)</span>
-    <span class="n">vrs</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Grid</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">vel_field</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">])]</span>
-    <span class="n">azs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Grid</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;AZ&#39;</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]]</span>
-    <span class="n">els</span> <span class="o">=</span> <span class="p">[</span><span class="n">Grid</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;EL&#39;</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">]]</span>
-    <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
-    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
-    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
-    <span class="n">rmsVr</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">wts</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))]</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))]</span>
-    <span class="n">cost</span> <span class="o">=</span> <span class="n">pydda</span><span class="o">.</span><span class="n">cost_functions</span><span class="o">.</span><span class="n">calculate_radial_vel_cost_function</span><span class="p">(</span>
-        <span class="n">vrs</span><span class="p">,</span> <span class="n">azs</span><span class="p">,</span> <span class="n">els</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">wts</span><span class="p">,</span> <span class="n">rmsVr</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
-    <span class="n">grad</span> <span class="o">=</span> <span class="n">pydda</span><span class="o">.</span><span class="n">cost_functions</span><span class="o">.</span><span class="n">calculate_grad_radial_vel</span><span class="p">(</span>
-        <span class="n">vrs</span><span class="p">,</span> <span class="n">azs</span><span class="p">,</span> <span class="n">els</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">wts</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">rmsVr</span><span class="p">)</span>
-
-    <span class="k">assert</span> <span class="n">cost</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">grad</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+of the openradar/HighIQ repository. This will then allow the maintainers to
+determine how the pull request will affect the functionality of HighIQ.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">test_io</span><span class="p">():</span>
+    <span class="n">my_ds</span> <span class="o">=</span> <span class="n">highiq</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">load_arm_netcdf</span><span class="p">(</span><span class="n">highiq</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">TEST_FILE</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;acf&#39;</span> <span class="ow">in</span> <span class="n">my_ds</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="s1">&#39;acf_bkg&#39;</span> <span class="ow">in</span> <span class="n">my_ds</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">my_ds</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="github">
 <h2>GitHub<a class="headerlink" href="#github" title="Permalink to this headline">¶</a></h2>
-<p>When you make contributions to PyDDA, we ask that you make your own fork
-of openradar/PyDDA and create your own branch from within that fork. After
+<p>When you make contributions to HighIQ, we ask that you make your own fork
+of openradar/HighIQ and create your own branch from within that fork. After
 forking the repository on GitHub, create your own branch by doing:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">checkout</span> <span class="o">-</span><span class="n">b</span> <span class="n">this_branch</span>
 <span class="n">git</span> <span class="n">branch</span> <span class="n">this_branch</span>
@@ -362,7 +335,7 @@ forking the repository on GitHub, create your own branch by doing:</p>
 </pre></div>
 </div>
 <p>After that is done, make a pull request from that branch to the master branch
-on openradar/PyDDA where the maintainers will review your pull request.</p>
+on openradar/HighIQ where the maintainers will review your pull request.</p>
 </div>
 </div>
 
@@ -376,7 +349,7 @@ on openradar/PyDDA where the maintainers will review your pull request.</p>
         <a href="API/index.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="usage.html" class="btn btn-neutral" title="Using HighIQ" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="source/auto_examples/plot_moments.html" class="btn btn-neutral" title="Example on plotting power spectra from raw IQ data" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

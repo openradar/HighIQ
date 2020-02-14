@@ -24,8 +24,10 @@ width, skewness, and kurtosis from raw lidar signals.
 
    installation
    usage
+   source/auto_examples/index
    contributing
    API/index.rst
+
 
 Indices and tables
 ==================
